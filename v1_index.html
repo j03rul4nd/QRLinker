@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>QR Generator App</title>
+
+    <!-- Meta básico para SEO -->
+    <meta name="description" content="Genera códigos QR personalizados con opciones de gradiente y emojis. Descarga tu QR en formato PNG de manera fácil y rápida.">
+    <meta name="keywords" content="QR code, generador de QR, personalización de QR, QR con emojis, QR gradiente, descarga QR, generador QR online">
+    <meta name="author" content="Tu Nombre o Nombre de la Empresa">
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow">
+
+    <!-- Open Graph para Facebook, LinkedIn, etc. -->
+    <meta property="og:title" content="Generador de QR Personalizado">
+    <meta property="og:description" content="Crea y personaliza tus códigos QR con gradientes y emojis. ¡Descárgalo en formato PNG!">
+    <meta property="og:image" content="https://tusitio.com/imagen-de-previa.png">
+    <meta property="og:url" content="https://tusitio.com">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="es_ES">
+
+    <!-- Twitter Card para Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Generador de QR Personalizado">
+    <meta name="twitter:description" content="Crea y personaliza tus códigos QR con gradientes y emojis. ¡Descárgalo en formato PNG!">
+    <meta name="twitter:image" content="https://tusitio.com/imagen-de-previa.png">
+    <meta name="twitter:url" content="https://tusitio.com">
+    <meta name="twitter:site" content="@tucuenta">
+
+
+
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div id="app">
+      <!-- Header -->
+      <header>
+        <h1>QR Code Generator</h1>
+      </header>
+
+      <!-- Input URL -->
+      <section id="url-input">
+        <label for="url">Enter URL:</label>
+        <input type="text" id="url" placeholder="https://example.com" />
+      </section>
+
+      <!-- Customization Options -->
+      <section id="customization-options">
+        <h2>Customize your QR Code</h2>
+        
+        <!-- Gradient Options -->
+        <div id="gradient-options">
+          <h3>Gradient Type</h3>
+          <label><input type="radio" name="gradient" value="linear" checked /> Linear</label>
+          <label><input type="radio" name="gradient" value="radial" /> Radial</label>
+          <label><input type="radio" name="gradient" value="complex" /> Complex</label>
+        </div>
+
+        <!-- Color Pickers -->
+        <div id="color-pickers">
+          <h3>Select Colors</h3>
+          <input type="color" id="color1" name="color1" value="#ff0000" />
+          <input type="color" id="color2" name="color2" value="#0000ff" />
+        </div>
+
+        <!-- 3D Effect Slider -->
+        <div id="3d-effect">
+          <h3>3D Effect</h3>
+          <input type="range" id="depth" name="depth" min="0" max="10" value="5" />
+        </div>
+
+        <!-- Emoji Selection -->
+        <div id="emoji-selection">
+          <h3>Select Emoji</h3>
+          <select id="emoji">
+            <option value="none">None</option>
+            <option value="smile">😊</option>
+            <option value="heart">❤️</option>
+            <option value="star">⭐</option>
+            <!-- Add more emojis as needed -->
+          </select>
+        </div>
+      </section>
+
+      <!-- Canvas to Generate QR Code -->
+      <section id="qr-display">
+        <h2>Your QR Code</h2>
+        <canvas id="qr-canvas"></canvas>
+      </section>
+
+      <!-- Download Button -->
+      <section id="download">
+        <button id="download-qr">Download as PNG</button>
+      </section>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

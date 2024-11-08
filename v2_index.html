@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de QR - Experiencia Premium</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        /* Variables de diseño */
+        :root {
+            --main-bg-color: #f5f5f7;
+            --text-color: #1d1d1f;
+            --accent-color: #007aff;
+            --hover-accent-color: #005ecb;
+            --border-color: #d1d1d6;
+            --input-bg-color: #f9f9f9;
+            --skeleton-color: #e0e0e0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --main-bg-color: #1c1c1e;
+                --text-color: #f2f2f7;
+                --accent-color: #0a84ff;
+                --input-bg-color: #3a3a3c;
+                --border-color: #4a4a4a;
+                --skeleton-color: #4a4a4a;
+            }
+        }
+
+        /* Estilos base */
+        body {
+            font-family: 'San Francisco', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--main-bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        header, main, footer {
+            width: 90%;
+            max-width: 760px;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease-in-out, transform 0.3s ease;
+        }
+
+        header:hover, main:hover, footer:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        h1, h2, p {
+            margin: 0;
+            padding: 0.5rem 0;
+        }
+
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        a:hover {
+            color: var(--hover-accent-color);
+        }
+
+        /* Estilo para formularios y botones */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        input[type="url"] {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            background-color: var(--input-bg-color);
+            transition: border-color 0.2s;
+        }
+
+        input[type="url"]:focus {
+            border-color: var(--accent-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--hover-accent-color);
+            transform: scale(1.02);
+        }
+
+        /* Sección de vista previa del QR */
+        .qr-preview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fafafa;
+            border: 2px dashed var(--border-color);
+            border-radius: 1rem;
+            height: 250px;
+            width: 250px;
+            margin: 1rem auto;
+            transition: border 0.3s;
+        }
+
+        .qr-preview:hover {
+            border: 2px dashed var(--accent-color);
+        }
+
+        /* Sección de edición */
+        .edit-section {
+            margin-top: 2rem;
+        }
+
+        .edit-section h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .edit-toggle {
+            margin-bottom: 1rem;
+        }
+
+        .toggle {
+            display: inline-block;
+            position: relative;
+            width: 40px;
+            height: 20px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: 0.4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Animaciones y transiciones para la sección de edición */
+        .edit-options {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out;
+        }
+
+        input[type="checkbox"]:checked ~ #edit-options {
+            max-height: 300px;
+            opacity: 1;
+            overflow: visible;
+        }
+
+        .edit-options div {
+            margin-bottom: 1rem;
+        }
+
+        /* Estado de carga (esqueleto) */
+        .skeleton {
+            background-color: var(--skeleton-color);
+            border-radius: 8px;
+            height: 20px;
+            width: 100px;
+            animation: skeleton-loading 1.5s infinite linear;
+        }
+
+        @keyframes skeleton-loading {
+            0% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* Modo oscuro */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--main-bg-color);
+                color: var(--text-color);
+            }
+
+            header, main, footer {
+                background: #2c2c2e;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            }
+
+            input, button {
+                background-color: var(--input-bg-color);
+                color: var(--text-color);
+            }
+
+            button:hover {
+                background-color: #444;
+            }
+
+            .qr-preview {
+                background-color: var(--input-bg-color);
+                border: 2px dashed var(--border-color);
+            }
+
+            .qr-preview:hover {
+                border-color: var(--accent-color);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Generador de QR</h1>
+    </header>
+
+    <main>
+
+        <!-- Formulario de ingreso de URL -->
+        <section aria-labelledby="url-section-title">
+            <h2 id="url-section-title">Añadir URL</h2>
+            <form>
+                <label for="url-input">Introduce tu URL:</label>
+                <input type="url" id="url-input" placeholder="https://ejemplo.com" required aria-required="true">
+                <button type="submit" aria-label="Generar código QR">Generar QR</button>
+            </form>
+        </section>
+
+        <!-- Vista previa del QR -->
+        <section aria-labelledby="qr-preview-title">
+            <h2 id="qr-preview-title">Vista previa del QR</h2>
+            <div class="qr-preview" aria-busy="true">
+                <p>QR aquí</p>
+            </div>
+            <button type="button" aria-label="Descargar QR">Descargar QR</button>
+        </section>
+
+        <!-- Sección de edición del QR -->
+        <section class="edit-section" aria-labelledby="edit-section-title">
+            <h3 id="edit-section-title">Editar QR</h3>
+            <div class="edit-toggle">
+                <label for="edit-toggle-checkbox" class="toggle" aria-label="Activar edición de QR">
+                    <input type="checkbox" id="edit-toggle-checkbox" aria-controls="edit-options" aria-expanded="false">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div id="edit-options" class="edit-options" aria-hidden="true">
+                <div>
+                    <label for="bg-color">Color de fondo:</label>
+                    <input type="color" id="bg-color" name="bg-color" value="#ffffff" aria-label="Seleccionar color de fondo">
+                </div>
+                <div>
+                    <label for="qr-color">Color del QR:</label>
+                    <input type="color" id="qr-color" name="qr-color" value="#000000" aria-label="Seleccionar color del QR">
+                </div>
+                <div>
+                    <label for="qr-size">Tamaño del QR:</label>
+                    <input type="range" id="qr-size" name="qr-size" min="100" max="500" value="250" aria-label="Seleccionar tamaño del QR">
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>Creado con pasión por <a href="https://www.linkedin.com/in/joel-benitez-iiot-industry/" target="_blank" aria-label="LinkedIn de Joel Benitez">Joel Benitez</a>. Visita mi <a href="https://joelbenitez.onrender.com/" target="_blank" aria-label="Portafolio de Joel Benitez">portafolio</a>.</p>
+    </footer>
+
+    <script>
+        document.getElementById('edit-toggle-checkbox').addEventListener('change', function () {
+            const editOptions = document.getElementById('edit-options');
+            editOptions.setAttribute('aria-hidden', !this.checked);
+            editOptions.setAttribute('aria-expanded', this.checked);
+        });
+    </script>
+</body>
+</html>

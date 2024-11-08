@@ -1,0 +1,70 @@
+ /* Basic styling */
+ body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #0b0b0b;
+    color: #e0e0e0;
+    overflow: hidden;
+}
+.content {
+    position: absolute;
+    text-align: center;
+    color: #f1f1f1;
+    z-index: 1;
+    max-width: 600px; /* Set max width for narrower content */
+    width: 90%; /* Makes it responsive on smaller screens */
+    margin: auto; /* Center the content */
+}
+.new-experience {
+    background: none;
+    border: 1px solid #666;
+    border-radius: 25px;
+    padding: 5px 15px;
+    font-size: 0.9rem;
+    color: #ccc;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.new-experience:hover {
+    background-color: #333;
+}
+.header-text {
+    font-size: 4rem; /* Increased size */
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(90deg, #ffffff, #b0b0b0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.sub-text {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #bbbbbb;
+    margin-top: 1rem;
+}
+.buttons {
+    display: flex;
+    gap: 20px;
+    margin-top: 2rem;
+    justify-content: center;
+}
+.button {
+    padding: 12px 24px;
+    border: 2px solid #ffffff;
+    border-radius: 25px;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+.button:hover {
+    background: linear-gradient(90deg, #ffffff, #666666);
+    color: #0d0d0d;
+}

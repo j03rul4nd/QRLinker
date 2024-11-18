@@ -55,3 +55,84 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     material.uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
 });
+
+class uiControl {
+    constructor() {
+        this.init();
+        this.listeners();
+    }
+
+    init() {
+        // Inicializa el QRCodeStyling con opciones por defecto
+        this.qrcode = new QRCodeStyling({
+            width: 300,
+            height: 300,
+            type: "svg",
+            data: "https://joelbenitez.onrender.com/",
+            dotsOptions: {
+                color: "#4267b2",
+                type: "rounded"
+            },
+            backgroundOptions: {
+                color: "#ffffff"
+            },
+            imageOptions: {
+                crossOrigin: "anonymous",
+                margin: 20
+            }
+        });
+
+        // Adjunta el QR al contenedor
+        this.qrcode.append(document.getElementById("qrResult"));
+    }
+
+    listeners() {
+        
+        const btn = document.getElementById("generateQrCodeBTN");
+        btn.addEventListener('click', () => {
+            const url = document.getElementById("inputUrl").value;
+            if (url) {
+                this.updateQR(url);
+                console.log("QR code updated with URL:", url);
+            }
+        });
+
+    }
+
+    updateQR(newData) {
+        // Actualiza el contenido del QR Code
+        this.qrcode.update({
+            data: newData
+        });
+    }
+}
+class engine {
+    camera = null;
+    scene = null;
+    controls = null;
+
+
+    constructor(){
+
+    }
+    init(){
+
+    }
+
+    createScene(){}
+    createQr(){}
+
+    exportQR(){}
+
+    animate(){
+
+    }
+
+    editParams(){}
+
+    resize(){}
+
+
+}
+
+const UiControl = new uiControl();

@@ -1,0 +1,19 @@
+.input-text {
+    border: 2px solid white;
+    border-radius: 25px; /* similar al borde redondeado */
+    background-color: #1a1a1a; /* color de fondo oscuro */
+    color: white; /* color del texto */
+    padding: 10px 20px; /* espacio interno */
+    font-size: 16px; /* tamaño de fuente */
+    outline: none; /* sin borde de enfoque */
+    transition: all 0.3s ease-in-out; /* transición suave al interactuar */
+}
+
+.input-text::placeholder {
+    color: #b3b3b3; /* color de placeholder */
+}
+
+.input-text:focus {
+    border-color: #ffffff; /* color de borde al hacer focus */
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); /* efecto de sombra */
+}

@@ -1,0 +1,11 @@
+.cntr-contentqr {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: stretch;
+    justify-content: flex-start;
+}
+#qrResult svg {
+    border-radius: 1rem;
+}

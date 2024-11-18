@@ -49,22 +49,3 @@
     color: #bbbbbb;
     margin-top: 1rem;
 }
-.buttons {
-    display: flex;
-    gap: 20px;
-    margin-top: 2rem;
-    justify-content: center;
-}
-.button {
-    padding: 12px 24px;
-    border: 2px solid #ffffff;
-    border-radius: 25px;
-    color: #ffffff;
-    text-decoration: none;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-.button:hover {
-    background: linear-gradient(90deg, #ffffff, #666666);
-    color: #0d0d0d;
-}

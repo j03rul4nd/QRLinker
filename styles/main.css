@@ -8,18 +8,21 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #0b0b0b;
+    /* background-color: #0b0b0b; */
     color: #e0e0e0;
     overflow: hidden;
+    overflow-y: auto;
 }
 .content {
-    position: absolute;
+    position: relative;
     text-align: center;
     color: #f1f1f1;
     z-index: 1;
-    max-width: 600px; /* Set max width for narrower content */
-    width: 90%; /* Makes it responsive on smaller screens */
-    margin: auto; /* Center the content */
+    max-width: 600px;
+    margin-top: 2rem;
+    width: 90%;
+    margin: auto;
+    background: transparent;
 }
 .new-experience {
     background: none;

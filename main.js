@@ -5,8 +5,19 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls';
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 const renderer = new THREE.WebGLRenderer({ alpha: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+// renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(window.innerWidth, document.body.scrollHeight);
 document.body.appendChild(renderer.domElement);
+
+// Estilizar el canvas
+renderer.domElement.style.position = 'absolute';
+renderer.domElement.style.top = '0';
+renderer.domElement.style.left = '0';
+renderer.domElement.style.width = '100%';
+renderer.domElement.style.height = '100%';
+renderer.domElement.style.zIndex = '-1'; // Se coloca al fondo de la pila de renderizado
+renderer.domElement.style.pointerEvents = 'none'; // Para que no interfiera con los eventos del resto de la página
+
 
 // Shader material for radial gradient background
 const fragmentShader = `
@@ -38,6 +49,8 @@ const material = new THREE.ShaderMaterial({
     }
 });
 
+ material.uniforms.u_resolution.value.set(window.innerWidth, document.body.scrollHeight);
+
 const geometry = new THREE.PlaneGeometry(2, 2);
 const plane = new THREE.Mesh(geometry, material);
 scene.add(plane);
@@ -52,9 +65,13 @@ animate();
 
 // Resize event listener
 window.addEventListener('resize', () => {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    material.uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
+    // renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth, document.body.scrollHeight);
+    
+    // material.uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
+    material.uniforms.u_resolution.value.set(window.innerWidth, document.body.scrollHeight);
 });
+
 
 class uiControl {
     constructor() {
@@ -87,7 +104,7 @@ class uiControl {
     }
 
     listeners() {
-        
+
         const btn = document.getElementById("generateQrCodeBTN");
         btn.addEventListener('click', () => {
             const url = document.getElementById("inputUrl").value;

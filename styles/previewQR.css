@@ -9,3 +9,19 @@
 #qrResult svg {
     border-radius: 1rem;
 }
+
+div#qrResult {
+    display: none;
+}
+
+#qrcode {
+    display: flex;
+    /* width: 300px; */
+    height: 300px;
+    /* border: 1px solid #000; */
+    justify-content: center;
+    align-items: center;
+    align-content: flex-start;
+    flex-direction: column;
+}
+

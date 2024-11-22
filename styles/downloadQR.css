@@ -1,0 +1,58 @@
+/* Sección de descargas */
+.download-section {
+    margin-top: 1.5rem;
+    text-align: center;
+    padding: 1rem;
+    border-radius: 15px;
+}
+
+.download-header {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #f1f1f1;
+    margin-bottom: 1rem;
+}
+
+/* Contenedor de botones */
+.download-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+}
+
+/* Botón de descarga */
+.download-btn {
+    background: none;
+    border: 2px solid #ffffff;
+    border-radius: 25px;
+    padding: 12px 24px;
+    color: #ffffff;
+    font-size: 1rem;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+.download-btn:hover {
+    background: linear-gradient(90deg, #ffffff, #666666);
+    color: #0d0d0d;
+}
+
+/* Ajustes responsivos */
+@media screen and (max-width: 600px) {
+    .download-section {
+        padding: 0.8rem;
+    }
+
+    .download-header {
+        font-size: 1.2rem;
+    }
+
+    .download-btn {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+}

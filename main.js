@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
 // Scene and renderer setup
 const scene = new THREE.Scene();
@@ -74,9 +75,11 @@ window.addEventListener('resize', () => {
 
 
 class uiControl {
+    
     constructor() {
         this.qrImage = null; // Variable para almacenar la imagen del QR
         this.qrTexture = null; // Variable para almacenar la textura de Three.js
+        this.debounceTimer = null;
         this.init();
         this.listeners();
 
@@ -125,13 +128,57 @@ class uiControl {
 
     listeners() {
         const btn = document.getElementById("generateQrCodeBTN");
+        const input = document.getElementById("inputUrl");
+
+        const btnDowloadModel3d = document.getElementById("downloadQrCodeGLTF");
+        const btnDowloadPNG = document.getElementById("downloadQrCodePNG");
+        const btnDowloadMP4 = document.getElementById("downloadQrCodeMP4");
+
+
         btn.addEventListener('click', async () => {
-            const url = document.getElementById("inputUrl").value;
+            const url = input.value;
             if (url) {
                 await this.updateQR(url);
                 console.log("QR code updated and texture stored for Three.js with URL:", url);
             }
         });
+
+
+        input.addEventListener('input', () => {
+            const value = input.value;
+
+            // Cancela cualquier temporizador de debounce anterior
+            if (this.debounceTimer) {
+                clearTimeout(this.debounceTimer);
+            }
+
+            if (value) {
+                // Debounce: espera 300ms después de que el usuario deje de escribir
+                this.debounceTimer = setTimeout(() => {
+                    console.log("Starting animation due to user input.");
+                    //window.engine.startAnimation();
+                    window.engine.setSphere();
+                }, 300);
+            } else {
+                // Si el input está vacío, ejecuta setsphere
+                console.log("Input is empty. Resetting sphere.");               
+                window.engine.startAnimation();
+            }
+        });
+
+
+        btnDowloadModel3d.addEventListener('click', async () =>{
+            await window.engine.downloadModel('my_QR.glb')
+        });
+
+        btnDowloadPNG.addEventListener('click', async () =>{
+            await window.engine.downloadModelAsPNG('my_QR.png')
+        });
+
+        btnDowloadMP4.addEventListener('click', async () =>{
+            await window.engine.downloadModelAsMP4('my_QR.mp4')
+        });
+
     }
 
     async updateQR(newData) {
@@ -155,281 +202,8 @@ class uiControl {
             });
         });
     }
-
-    old_init(){
-        // Canvas and scene setup
-        const container = document.getElementById('qrcode');
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.z = 3; // Aleja la cámara para ver mejor el plano
-
-                
-        const renderer = new THREE.WebGLRenderer({ alpha: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        container.appendChild(renderer.domElement);
-        
-        // Create plane geometry for particles
-        const geometry = new THREE.BufferGeometry();
-        // Ajusta el número de partículas y la cantidad por lado
-        const numParticlesPerRow = 100; // Número de partículas por fila
-        const numParticlesPerColumn = 100; // Número de partículas por columna
-        const numParticles = numParticlesPerRow * numParticlesPerColumn;
-        const positions = new Float32Array(numParticles * 3);
-
-        // Calcula el espaciado entre partículas
-        const spacingX = 2 / numParticlesPerRow; // Ajustar para que cubra la malla de -1 a 1 en x
-        const spacingY = 2 / numParticlesPerColumn; // Ajustar para que cubra la malla de -1 a 1 en y
-
-        // Genera las posiciones de las partículas en una cuadrícula
-        let index = 0;
-        for (let i = 0; i < numParticlesPerRow; i++) {
-            for (let j = 0; j < numParticlesPerColumn; j++) {
-                positions[index * 3] = (i * spacingX) - 1; // x (ajusta para centrar)
-                positions[index * 3 + 1] = (j * spacingY) - 1; // y (ajusta para centrar)
-                positions[index * 3 + 2] = 0; // z
-                index++;
-            }
-        }
-
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        
-        // Add orbit controls but lock user input
-        const controls = new OrbitControls(camera, renderer.domElement);
-        // controls.enableZoom = false;
-        // controls.enablePan = false;
-        // controls.enableRotate = false;
-
-        // Load texture
-        const textureLoader = new THREE.TextureLoader();
-        const texture = textureLoader.load('./preview-image.png');
-
-        // Create shader material
-        const material = new THREE.ShaderMaterial({
-            uniforms: {
-                uTexture: { value: texture }
-            },
-            vertexShader: `
-                void main() {
-                    gl_PointSize = 5.0; // Aumenta el tamaño de los puntos para ver la textura mejor
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            fragmentShader: `
-            uniform sampler2D uTexture;
-            void main() {
-                vec2 uv = gl_PointCoord;
-                vec4 color = texture2D(uTexture, uv);
-                // if (color.a < 0.1) discard; // Comentar para depuración
-                gl_FragColor = color;
-            }
-        `,
-            transparent: true
-        });
-
-        // Create particle mesh
-        const particleMesh = new THREE.Points(geometry, material);
-        scene.add(particleMesh);
-
-        // Animation loop
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-
-        animate();
-
-        // Resize handling
-        window.addEventListener('resize', () => {
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        });
-
-    }
 }
 
-class old_engine {
-    camera = null;
-    scene = null;
-    controls = null;
-    qrTexture = null;
-
-    constructor(texture){
-        this.qrTexture = texture;
-        this.init()
-    }
-    
-    init(){
-        const container = document.getElementById('qrcode');
-
-        // Crear escena y cámara
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75,  container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.z = 1.5;
-
-        // Añadir lienzo a la escena
-        // renderer.setSize(window.innerWidth, window.innerHeight);
-
-        const renderer = new THREE.WebGLRenderer({ alpha: true, preserveDrawingBuffer: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        container.appendChild(renderer.domElement);
-        
-
-        const controls = new OrbitControls(camera, renderer.domElement);
-
-        // Cargar textura
-        const textureLoader = new THREE.TextureLoader();
-        //const texture = textureLoader.load(`https://res.cloudinary.com/dbxohjdng/image/upload/v1712590643/scpeanuobdjpo8fovl2y.png`);
-        const texture = this.qrTexture;
-
-        // Definir shaders
-        const vertexShader = `
-        uniform float uPointSize;
-        uniform float uTime; // Uniforme para controlar el tiempo
-        varying vec2 vUv;
-        uniform float uWaveSpeed;
-        uniform float uAmplitude;
-        uniform vec2 uWaveCenter; // Añadir la uniforme para el centro de la onda
-
-        void main() {
-            vUv = uv;
-            vec2 pos = position.xy - uWaveCenter; // Ajustar la posición respecto al centro de la onda
-            float distanceFromCenter = length(pos);
-            float wave = sin(distanceFromCenter * 10.0 - uTime * uWaveSpeed) * uAmplitude;
-            vec3 newPosition = position + vec3(0, 0, wave);
-            gl_PointSize = uPointSize;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
-        }
-
-
-        `;
-
-        const fragmentShader = `
-            uniform sampler2D uTexture;
-            varying vec2 vUv;
-
-            void main() { 
-                vec4 texColor = texture2D(uTexture, vUv);
-                vec2 coords = 2.0 * gl_PointCoord - 1.0;
-                float radius = dot(coords, coords);
-                if (radius > 1.0) {
-                    discard;
-                }
-                gl_FragColor = texColor;
-            }
-        `;
-
-        // Crear el material usando la textura de MatCap
-        const matcapMaterial = new THREE.MeshMatcapMaterial({
-            matcap: texture
-        });
-
-        // Crear una geometría (esfera, cubo, etc.)
-        const geometry = new THREE.PlaneGeometry(5, 5, 100, 100);
-
-        // Crear un mesh con la geometría y el material
-        const mesh = new THREE.Mesh(geometry, matcapMaterial);
-
-        // Añadir el mesh a la escena
-        scene.add(mesh);
-
-        const shaderMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-            uTexture: { value: texture },
-            uPointSize: { value: 1.0 }, 
-            uTime: { value: 0.0 },
-            uWaveSpeed: { value: 0.0 },
-            uAmplitude: { value: 0.0 },
-            uWaveCenter: { value: new THREE.Vector2(0, 0) }
-        },
-        vertexShader: vertexShader,
-        fragmentShader: fragmentShader,
-        transparent: true,
-        blending: THREE.AdditiveBlending,
-        depthTest: false,
-        });
-
-        let globalPointsObject = null;
-
-
-        function updateGeometry(numberSize) {
-        const size = numberSize; // Tamaño deseado para controlar la cantidad de partículas
-        const vertices = [];
-        for (let i = 0; i < size; i++) {
-            for (let j = 0; j < size; j++) {
-                const x = (i / size) * 2 - 1;
-                const y = (j / size) * 2 - 1;
-                vertices.push(x, y, 0);
-            }
-        }
-
-        const pointsGeometry = new THREE.BufferGeometry();
-        pointsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-
-        // Generar y aplicar coordenadas UV
-        const uvs = [];
-        for (let i = 0; i < size; i++) {
-            for (let j = 0; j < size; j++) {
-                const u = i / (size - 1);
-                const v = j / (size - 1);
-                uvs.push(u, v);
-            }
-        }
-        pointsGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-
-        // Verificar si ya existe un objeto de puntos en la escena
-        if (scene.children.some(child => child instanceof THREE.Points)) {
-            // Actualizar la geometría del objeto de puntos existente
-            const existingPoints = scene.children.find(child => child instanceof THREE.Points);
-            existingPoints.geometry.dispose(); // Limpiar la geometría anterior para evitar fugas de memoria
-            existingPoints.geometry = pointsGeometry;
-            existingPoints.geometry.attributes.position.needsUpdate = true;
-            globalPointsObject = existingPoints;
-        } else {
-            // Crear un nuevo objeto de puntos si no existe ninguno y añadirlo a la escena
-            const points = new THREE.Points(pointsGeometry, shaderMaterial);
-            scene.add(points);
-            globalPointsObject = points; 
-        }
-        }
-
-
-        //updateGeometry(731);
-
-        function animate(time) {
-            requestAnimationFrame(animate);
-            controls.update();
-          
-          //  shaderMaterial.uniforms.uTime.value += 0.05;
-            const position = geometry.attributes.position;
-            for (let i = 0; i < position.count; i++) {
-                const y = Math.sin(position.getX(i) * 2 + time * 0.001) * 0.5;
-                position.setZ(i, y);
-            }
-            position.needsUpdate = true;
-                
-            renderer.render(scene, camera);
-        }
-        
-        animate(0);
-
-    }
-
-    createScene(){}
-    createQr(){}
-
-    exportQR(){}
-
-    animate(){
-
-    }
-
-    editParams(){}
-
-    resize(){}
-
-
-}
 class engine {
     constructor(texture) {
         this.qrTexture = texture;
@@ -507,7 +281,7 @@ class engine {
                 gl_FragColor = texColor;
             }
         `
-
+        
         this.shaderMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 uTexture: { value: this.qrTexture },
@@ -551,14 +325,10 @@ class engine {
         this.scene.add(points);
         this.globalPointsObject = points;
     }
-
-    old_setPlane() {
-        this.isAnimating = false; // Detener animación
-        this.shaderMaterial.uniforms.uProgress.value = 1.0; // Plano completa
-        this.shaderMaterial.uniforms.uPointSize.value = 3.0; // Plano completa
-    }
-
+    
+    
     setPlane() {
+        this.startAnimatonSphere = false;
         this.isAnimating = false; // Detener animación
     
         // Remover el objeto de partículas si está presente
@@ -567,15 +337,86 @@ class engine {
             this.globalPointsObject = null;
         }
     
+        // Crear un canvas para manipular los píxeles de la textura
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+    
+        const qrImage = this.qrTexture.image; // Asume que `this.qrTexture.image` contiene la imagen cargada
+        canvas.width = qrImage.width;
+        canvas.height = qrImage.height;
+    
+        // Dibujar la textura en el canvas
+        context.drawImage(qrImage, 0, 0);
+    
+        // Obtener los datos de los píxeles
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+    
+        // Calcular el centro del canvas
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+    
+        // Aplicar gradiente radial solo a los píxeles azules
+        for (let y = 0; y < canvas.height; y++) {
+            for (let x = 0; x < canvas.width; x++) {
+                const index = (y * canvas.width + x) * 4;
+    
+                const r = data[index];
+                const g = data[index + 1];
+                const b = data[index + 2];
+    
+                // Detectar píxeles predominantemente azules
+                if (b > r && b > g) {
+                    // Calcular distancia desde el centro
+                    const dx = x - centerX;
+                    const dy = y - centerY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+                    // Normalizar la distancia
+                    const t = distance / maxDistance;
+    
+                    // Interpolar entre rojo y azul
+                    const newR = 255 * (1 - t); // Más rojo cerca del centro
+                    const newB = 255 * t; // Más azul hacia los bordes
+    
+                    // Aplicar el gradiente al píxel azul
+                    data[index] = newR;     // Rojo
+                    data[index + 1] = 0;    // Verde
+                    data[index + 2] = newB; // Azul
+                    // Mantener el canal alfa original
+                }
+            }
+        }
+    
+        // Actualizar los datos de la textura
+        context.putImageData(imageData, 0, 0);
+    
+        // Crear una nueva textura desde el canvas
+        const updatedTexture = new THREE.CanvasTexture(canvas);
+        updatedTexture.wrapS = THREE.ClampToEdgeWrapping;
+        updatedTexture.wrapT = THREE.ClampToEdgeWrapping;
+        updatedTexture.minFilter = THREE.LinearFilter;
+        updatedTexture.magFilter = THREE.LinearFilter;
+        updatedTexture.encoding = THREE.sRGBEncoding;
+    
         // Crear una nueva geometría de plano y material
         const planeGeometry = new THREE.PlaneGeometry(2, 2, 100, 100);
         const planeMaterial = new THREE.MeshBasicMaterial({
-            map: this.qrTexture,
-            side: THREE.DoubleSide
+            map: updatedTexture,
+            side: THREE.DoubleSide,
+            color: 0xffffff, // Asegúrate de que sea blanco puro para no alterar la textura
+            toneMapped: false // Evita ajustes automáticos de exposición si usas un renderizador físico
         });
+    
+        planeGeometry.attributes.uv.needsUpdate = true;
     
         // Crear el mesh del plano
         const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+    
+        // Asignar un alias único al objeto
+        planeMesh.name = 'planeModel'; // Este es el alias único
+    
         this.scene.add(planeMesh);
     
         // Guardar referencia global para futuras modificaciones
@@ -586,15 +427,82 @@ class engine {
         this.camera.lookAt(this.scene.position);
     }
     
+    
+    
+    
     setSphere() {
+        // Si hay un objeto global presente (sea el plano o las partículas), eliminarlo
+        if (this.globalPointsObject) {
+            this.scene.remove(this.globalPointsObject);
+            this.globalPointsObject = null;
+        }
+        // Verificar si el objeto global está ausente o no es un `Points`
+        if (!this.globalPointsObject || !this.globalPointsObject.isPoints) {
+            // Crear el objeto de partículas si no existe
+            this.createGeometry();
+            this.createMesh();
+        }
         this.isAnimating = false; // Detener animación
         this.shaderMaterial.uniforms.uProgress.value = 0.0; // Esfera completo
+
+        // Actualizar la cámara para mejor vista
+        this.startAnimatonSphere = true;
+
     }
 
     startAnimation() {
+        this.startAnimatonSphere = false;
+        // Si hay un objeto global presente (sea el plano o las partículas), eliminarlo
+        if (this.globalPointsObject) {
+            this.scene.remove(this.globalPointsObject);
+            this.globalPointsObject = null;
+        }
+        // Verificar si el objeto global está ausente o no es un `Points`
+        if (!this.globalPointsObject || !this.globalPointsObject.isPoints) {
+            // Crear el objeto de partículas si no existe
+            this.createGeometry();
+            this.createMesh();
+        }
         this.isAnimating = true; // Reactivar animación
     }
 
+    setPlaneWithAnimation() {
+        this.startAnimatonSphere = false;
+        // Reiniciar la animación para transición suave
+        this.isAnimating = false;
+    
+        // Verificar si el objeto global está presente
+        if (!this.globalPointsObject || !this.globalPointsObject.isPoints) {
+            this.createGeometry();
+            this.createMesh();
+        }
+    
+        // Iniciar la animación de transición
+        let startTime = null;
+        const duration = 2000; // Duración de la animación en ms (2 segundos)
+        
+        const animateTransition = (time) => {
+            if (!startTime) startTime = time;
+            const elapsed = time - startTime;
+    
+            // Calcular progreso como una curva suave (ease in-out)
+            const progress = Math.min(elapsed / duration, 1);
+            const easedProgress = -0.5 * (Math.cos(Math.PI * progress) - 1);
+    
+            // Actualizar el valor uniforme en el shader
+            this.shaderMaterial.uniforms.uProgress.value = easedProgress;
+    
+            // Finalizar la animación cuando termine la duración
+            if (progress < 1) {
+                requestAnimationFrame(animateTransition);
+            } else {
+                this.isAnimating = false;
+            }
+        };
+    
+        requestAnimationFrame(animateTransition);
+    }
+    
     animate() {
         const animateScene = (time) => {
             requestAnimationFrame(animateScene);
@@ -602,6 +510,10 @@ class engine {
             if (this.isAnimating) {
                 const progress = Math.sin(time * 0.0005) * 0.5 + 0.5; // Oscilar entre 0 y 1
                 this.shaderMaterial.uniforms.uProgress.value = progress;
+            }
+            if(this.startAnimatonSphere){
+                this.globalPointsObject.rotation.x += 0.01; // Rotar en el eje X
+                this.globalPointsObject.rotation.y += 0.01; // Rotar en el eje Y
             }
 
             this.controls.update();
@@ -625,6 +537,160 @@ class engine {
             this.globalPointsObject.material.needsUpdate = true; // Asegúrate de forzar la actualización
         }
     }
+
+    downloadModel(fileName = 'model.glb') {
+        try {
+            // Buscar el objeto por su nombre en la escena
+            const objectToExport = this.scene.getObjectByName('planeModel');
+    
+            if (!objectToExport) {
+                throw new Error('No se encontró el objeto con el alias "planeModel" en la escena.');
+            }
+    
+            const exporter = new GLTFExporter();
+    
+            // // Crear un objeto de prueba (testBox)
+            // const testMesh = new THREE.Mesh(
+            //     new THREE.BoxGeometry(1, 1, 1),
+            //     new THREE.MeshBasicMaterial({ color: 0xff0000 })
+            // );
+            // testMesh.name = 'testBox'; // Alias único
+            // this.scene.add(testMesh);
+    
+            // Intentar exportar el objeto específico
+            exporter.parse(
+                objectToExport, // Exportar solo el objeto
+                (result) => {
+                    try {
+                        // Manejar el resultado dependiendo de su tipo
+                        if (result instanceof ArrayBuffer) {
+                            // Crear un blob para la descarga (binario .glb)
+                            const blob = new Blob([result], { type: 'application/octet-stream' });
+    
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(blob);
+                            link.download = fileName;
+                            link.click();
+                        } else if (typeof result === 'object') {
+                            // Manejar exportación JSON (glTF)
+                            const json = JSON.stringify(result);
+                            const blob = new Blob([json], { type: 'application/json' });
+    
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(blob);
+                            link.download = fileName.replace('.glb', '.gltf');
+                            link.click();
+                        } else {
+                            throw new Error('Tipo de resultado no manejado.');
+                        }
+                    } catch (innerError) {
+                        console.error('Error durante la generación del archivo para la descarga:', innerError);
+                    }
+                },
+                {
+                    binary: true // Exportar en formato binario (.glb)
+                }
+            );
+        } catch (error) {
+            console.error('Error al intentar exportar el modelo:', error);
+            alert(`Error: ${error.message}. Revisa la consola para más detalles.`);
+        }
+    }
+    
+    downloadModelAsPNG(fileName = 'model.png') {
+        try {
+            // Verificar que la escena y el renderizador estén inicializados
+            if (!this.scene || !this.renderer || !this.camera) {
+                throw new Error('Escena, renderizador o cámara no están configurados.');
+            }
+    
+            // Ajustar el tamaño del renderizador temporalmente si es necesario
+            const originalSize = { width: this.renderer.domElement.width, height: this.renderer.domElement.height };
+            this.renderer.setSize(1920, 1080); // Resolución para la captura
+    
+            // Renderizar la escena
+            this.renderer.render(this.scene, this.camera);
+    
+            // Convertir el contenido del canvas a una URL en formato PNG
+            const imageURL = this.renderer.domElement.toDataURL('image/png');
+    
+            // Restaurar el tamaño original del renderizador
+            this.renderer.setSize(originalSize.width, originalSize.height);
+    
+            // Crear un enlace de descarga
+            const link = document.createElement('a');
+            link.href = imageURL;
+            link.download = fileName;
+    
+            // Activar la descarga
+            link.click();
+    
+            console.log('Modelo exportado como PNG exitosamente.');
+        } catch (error) {
+            console.error('Error al intentar exportar el modelo como PNG:', error);
+            alert(`Error: ${error.message}. Revisa la consola para más detalles.`);
+        }
+    }
+    
+    downloadModelAsMP4(fileName = 'model.mp4', duration = 5000, fps = 30) {
+        try {
+            // Verificar que la escena, el renderizador y la cámara estén inicializados
+            if (!this.scene || !this.renderer || !this.camera) {
+                throw new Error('Escena, renderizador o cámara no están configurados.');
+            }
+    
+            // Crear una instancia de CCapture
+            const capturer = new CCapture({
+                format: 'webm',
+                framerate: fps,
+                verbose: true,
+            });
+    
+            // Configurar la duración y el intervalo de fotogramas
+            const totalFrames = (fps * duration) / 1000; // Total de cuadros en el video
+            let currentFrame = 0;
+    
+            // Configurar la animación del modelo
+            const originalAnimationState = this.isAnimating; // Guardar el estado original
+            this.isAnimating = false; // Pausar cualquier animación preexistente
+    
+            const renderFrame = () => {
+                // Actualizar la rotación del modelo (si es necesario)
+                if (this.globalPointsObject) {
+                    this.globalPointsObject.rotation.y += (Math.PI * 2) / totalFrames;
+                }
+    
+                // Renderizar la escena
+                this.renderer.render(this.scene, this.camera);
+    
+                // Capturar el fotograma actual
+                capturer.capture(this.renderer.domElement);
+    
+                currentFrame++;
+    
+                // Continuar o finalizar la captura
+                if (currentFrame < totalFrames) {
+                    requestAnimationFrame(renderFrame);
+                } else {
+                    // Finalizar la captura
+                    capturer.stop();
+                    capturer.save(); // Descargar el archivo
+                    this.isAnimating = originalAnimationState; // Restaurar el estado original
+                    console.log('Captura de video completada.');
+                }
+            };
+    
+            // Iniciar la captura
+            capturer.start();
+            renderFrame(); // Comenzar el ciclo de renderizado y captura
+        } catch (error) {
+            console.error('Error al intentar exportar el modelo como MP4:', error);
+            alert(`Error: ${error.message}. Revisa la consola para más detalles.`);
+        }
+    }
+    
+    
+    
     
 }
 

@@ -327,7 +327,7 @@ class engine {
     }
     
     
-    setPlane() {
+    async setPlane() {
         this.startAnimatonSphere = false;
         this.isAnimating = false; // Detener animación
     
@@ -538,13 +538,15 @@ class engine {
         }
     }
 
-    downloadModel(fileName = 'model.glb') {
+    async downloadModel(fileName = 'model.glb') {
         try {
             // Buscar el objeto por su nombre en la escena
             const objectToExport = this.scene.getObjectByName('planeModel');
     
             if (!objectToExport) {
-                throw new Error('No se encontró el objeto con el alias "planeModel" en la escena.');
+                await this.setPlane();
+                await this.downloadModel();
+                //throw new Error('No se encontró el objeto con el alias "planeModel" en la escena.');
             }
     
             const exporter = new GLTFExporter();
@@ -593,7 +595,7 @@ class engine {
             );
         } catch (error) {
             console.error('Error al intentar exportar el modelo:', error);
-            alert(`Error: ${error.message}. Revisa la consola para más detalles.`);
+            console.error(`Error: ${error.message}. Revisa la consola para más detalles.`);
         }
     }
     
@@ -628,70 +630,57 @@ class engine {
             console.log('Modelo exportado como PNG exitosamente.');
         } catch (error) {
             console.error('Error al intentar exportar el modelo como PNG:', error);
-            alert(`Error: ${error.message}. Revisa la consola para más detalles.`);
+            console.error(`Error: ${error.message}. Revisa la consola para más detalles.`);
         }
     }
     
     downloadModelAsMP4(fileName = 'model.mp4', duration = 5000, fps = 30) {
         try {
-            // Verificar que la escena, el renderizador y la cámara estén inicializados
             if (!this.scene || !this.renderer || !this.camera) {
                 throw new Error('Escena, renderizador o cámara no están configurados.');
             }
     
-            // Crear una instancia de CCapture
             const capturer = new CCapture({
                 format: 'webm',
                 framerate: fps,
                 verbose: true,
             });
     
-            // Configurar la duración y el intervalo de fotogramas
-            const totalFrames = (fps * duration) / 1000; // Total de cuadros en el video
+            const totalFrames = (fps * duration) / 1000;
             let currentFrame = 0;
-    
-            // Configurar la animación del modelo
-            const originalAnimationState = this.isAnimating; // Guardar el estado original
-            this.isAnimating = false; // Pausar cualquier animación preexistente
+            const originalAnimationState = this.isAnimating;
+            this.isAnimating = false;
     
             const renderFrame = () => {
-                // Actualizar la rotación del modelo (si es necesario)
-                if (this.globalPointsObject) {
-                    this.globalPointsObject.rotation.y += (Math.PI * 2) / totalFrames;
-                }
+                try {
+                    if (this.globalPointsObject) {
+                        this.globalPointsObject.rotation.y += (Math.PI * 2) / totalFrames;
+                    }
     
-                // Renderizar la escena
-                this.renderer.render(this.scene, this.camera);
+                    this.renderer.render(this.scene, this.camera);
+                    capturer.capture(this.renderer.domElement);
     
-                // Capturar el fotograma actual
-                capturer.capture(this.renderer.domElement);
-    
-                currentFrame++;
-    
-                // Continuar o finalizar la captura
-                if (currentFrame < totalFrames) {
-                    requestAnimationFrame(renderFrame);
-                } else {
-                    // Finalizar la captura
-                    capturer.stop();
-                    capturer.save(); // Descargar el archivo
-                    this.isAnimating = originalAnimationState; // Restaurar el estado original
-                    console.log('Captura de video completada.');
+                    currentFrame++;
+                    if (currentFrame < totalFrames) {
+                        requestAnimationFrame(() => renderFrame()); // Asegurar contexto
+                    } else {
+                        capturer.stop();
+                        capturer.save();
+                        this.isAnimating = originalAnimationState;
+                        console.log('Captura de video completada.');
+                    }
+                } catch (renderError) {
+                    console.error('Error durante el renderizado:', renderError);
                 }
             };
     
-            // Iniciar la captura
             capturer.start();
-            renderFrame(); // Comenzar el ciclo de renderizado y captura
+            renderFrame();
         } catch (error) {
             console.error('Error al intentar exportar el modelo como MP4:', error);
-            alert(`Error: ${error.message}. Revisa la consola para más detalles.`);
+            console.error(`Error: ${error.message}. Revisa la consola para más detalles.`);
         }
-    }
-    
-    
-    
-    
+    }       
 }
 
 

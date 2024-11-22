@@ -132,7 +132,7 @@ class uiControl {
 
         const btnDowloadModel3d = document.getElementById("downloadQrCodeGLTF");
         const btnDowloadPNG = document.getElementById("downloadQrCodePNG");
-        const btnDowloadMP4 = document.getElementById("downloadQrCodeMP4");
+        const btnDownloadMP4 = document.getElementById("downloadQrCodeMP4");
 
 
         btn.addEventListener('click', async () => {
@@ -175,8 +175,33 @@ class uiControl {
             await window.engine.downloadModelAsPNG('my_QR.png')
         });
 
-        btnDowloadMP4.addEventListener('click', async () =>{
-            await window.engine.downloadModelAsMP4('my_QR.mp4')
+        btnDownloadMP4.addEventListener('click', async () =>{
+           // await window.engine.downloadModelAsMP4('my_QR.mp4')
+           try {
+                // Cambiar texto a "Creating video..."
+                btnDownloadMP4.textContent = "Creating video...";
+                btnDownloadMP4.disabled = true; // Deshabilitar mientras carga
+                
+                // Llamar la función de generación de video
+                await window.engine.downloadModelAsMP4('my_QR.mp4');
+                
+                // Cambiar texto a "Successfully created!"
+                btnDownloadMP4.textContent = "Successfully created!";
+                
+                // Esperar unos segundos antes de regresar al estado inicial
+                setTimeout(() => {
+                    btnDownloadMP4.textContent = "Download as video";
+                    btnDownloadMP4.disabled = false; // Habilitar nuevamente
+                }, 3000);
+            } catch (error) {
+                console.error("Error during video creation:", error);
+                // En caso de error, mostrar mensaje y regresar al estado inicial
+                btnDownloadMP4.textContent = "Error creating video";
+                setTimeout(() => {
+                    btnDownloadMP4.textContent = "Download as video";
+                    btnDownloadMP4.disabled = false;
+                }, 3000);
+            }
         });
 
     }

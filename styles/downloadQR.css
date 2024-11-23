@@ -1,15 +1,25 @@
 /* Sección de descargas */
 .download-section {
-    margin-top: 1.5rem;
+    /* margin-top: 1.5rem; */
     text-align: center;
     padding: 1rem;
     border-radius: 15px;
 }
 
+#download {
+    display: none; /* Ocultar por defecto */
+    opacity: 0; /* Invisible inicialmente */
+    transition: opacity 0.5s ease; /* Transición suave para la opacidad */
+}
+
+#download.visible {
+    display: block; /* Mostrar el elemento */
+    opacity: 1; /* Hacerlo visible */
+}
+
 .download-header {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #f1f1f1;
     margin-bottom: 1rem;
 }
 

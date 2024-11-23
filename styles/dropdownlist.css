@@ -1,0 +1,93 @@
+.edit-Toggle {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 5px;
+    align-items: baseline;
+    justify-content: center;
+    flex-wrap: nowrap;
+    cursor: pointer;
+}
+
+.edit-Toggle:hover {
+    color: #aeaeae;
+}
+.fa-arrow-right {
+    transition: transform 0.3s ease-in-out; /* Transición suave para la rotación */
+}
+
+[status="close"] .fa-arrow-right{
+    transform: rotate( 0deg );
+}
+
+[status="open"] .fa-arrow-right{
+    transform: rotate( 90deg );
+}
+
+.section-toggle {
+    opacity: 0; /* Invisible inicialmente */
+    height: 0;
+    overflow: hidden; /* Asegura que el contenido oculto no sea visible */
+    transition: opacity 0.5s ease, height 0.5s ease; /* Transición suave */
+}
+
+.section-toggle[status="open"] {
+    opacity: 1; /* Hacer visible */
+    height: auto; /* Restaurar altura */
+}
+
+.edit-options-custom-palette {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 1rem;
+}
+.section-custom-palette {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    gap: 1rem;
+}
+
+.sectionCustomRadialInputs {
+    gap: 5px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    align-content: flex-start;
+}
+
+.colorRadialCustomSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+    flex-wrap: nowrap;
+}
+
+.section-palette-default {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+}
+
+/* Ajustes responsivos */
+@media screen and (max-width: 600px) {
+    .section-palette-default {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+    }
+}

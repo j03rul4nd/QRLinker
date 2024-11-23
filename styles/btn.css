@@ -19,3 +19,21 @@
     background: linear-gradient(90deg, #ffffff, #666666);
     color: #0d0d0d;
 }
+
+.edit-btn.selected {
+    background-color: #ffffff;
+    color: #333333;
+    border-color: #ffffff;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    /* transform: scale(1.1); */
+    transition: all 0.3s ease;
+}
+
+/* Ajustes para pantallas pequeñas */
+@media screen and (max-width: 600px) {
+    .buttons {
+        flex-direction: column; /* Cambiar a una dirección de columna */
+        align-items: center;   /* Centrar los elementos */
+    }
+}

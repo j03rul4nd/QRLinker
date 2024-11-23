@@ -17,3 +17,14 @@
     border-color: #ffffff; /* color de borde al hacer focus */
     box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); /* efecto de sombra */
 }
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+}
+
+.shake {
+    animation: shake 0.3s ease-in-out;
+}

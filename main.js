@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { EmojiButton } from '@joeattardi/emoji-button';
 
 // Scene and renderer setup
 const scene = new THREE.Scene();
@@ -77,6 +78,7 @@ window.addEventListener('resize', () => {
 class uiControl {
     
     constructor() {
+        this.firstrender = true;
         this.qrImage = null; // Variable para almacenar la imagen del QR
         this.qrTexture = null; // Variable para almacenar la textura de Three.js
         this.debounceTimer = null;
@@ -127,6 +129,7 @@ class uiControl {
     }
 
     listeners() {
+        let _me =this;
         const btn = document.getElementById("generateQrCodeBTN");
         const input = document.getElementById("inputUrl");
 
@@ -134,16 +137,140 @@ class uiControl {
         const btnDowloadPNG = document.getElementById("downloadQrCodePNG");
         const btnDownloadMP4 = document.getElementById("downloadQrCodeMP4");
 
+        const primaryPalette = document.getElementById("PrimaryPalette");
+        const secondaryPalette = document.getElementById("SecondaryPalette");
 
-        btn.addEventListener('click', async () => {
-            const url = input.value;
-            if (url) {
-                await this.updateQR(url);
-                console.log("QR code updated and texture stored for Three.js with URL:", url);
-            }
+        // Seleccionamos todos los toggles
+        const toggles = document.querySelectorAll('.edit-Toggle');
+
+        toggles.forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const icon = toggle.querySelector('.icon-toggle');
+                const section = toggle.nextElementSibling;
+        
+                // Alternar el estado de 'open' y 'close'
+                const isOpen = icon.getAttribute('status') === 'open';
+                
+                icon.setAttribute('status', isOpen ? 'close' : 'open');
+                section.setAttribute('status', isOpen ? 'close' : 'open');
+            });
         });
 
+        // Selección de los botones y la sección de edición
+        const editOptionsSection = document.getElementById("custom-palette");
+        const palettebuttons = document.querySelectorAll('.palette-options');
 
+        // Función para manejar el clic en los botones
+        palettebuttons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Limpiar todas las clases 'selected' y ocultar las secciones relacionadas
+                palettebuttons.forEach(btn => btn.classList.remove('selected'));
+                editOptionsSection.style.display = 'none'; // Ocultar por defecto
+
+                // Marcar el botón actual como seleccionado
+                button.classList.add('selected');
+
+                // Mostrar la sección solo si se selecciona "Create Your Palette"
+                if (button.id === 'CreateYourPalette') {
+                    editOptionsSection.style.display = 'flex';
+                }
+            });
+        });
+
+        // Función para validar si el texto no está vacío
+        function isValidInput(value) {
+            return value.trim() !== ""; // Verifica que el texto no esté vacío o compuesto solo de espacios
+        }
+
+        const editOptions = document.getElementById('editQRoptions');
+        this.editQRoptionsDoomIsVisible = false;
+        const toggleEditOptions = () => {
+            if (editOptions.classList.contains('visible')) {
+                // Ocultar la sección
+                editOptions.style.opacity = '0';
+                this.editQRoptionsDoomIsVisible = false;
+                setTimeout(() => {
+                    editOptions.classList.remove('visible');
+                    editOptions.style.display = 'none';
+                }, 500); // Coincide con el tiempo de transición
+            } else {
+                // Mostrar la sección
+                editOptions.style.display = 'block';
+                this.editQRoptionsDoomIsVisible = true;
+                setTimeout(() => {
+                    editOptions.classList.add('visible');
+                    editOptions.style.opacity = '1';
+                }, 10); // Permite que la transición se active
+            }
+        };
+        const editDownload = document.getElementById('download');
+        const toggleDownloadOptions = () => {
+            if (editDownload.classList.contains('visible')) {
+                // Ocultar la sección
+                editDownload.style.opacity = '0';
+                setTimeout(() => {
+                    editDownload.classList.remove('visible');
+                    editDownload.style.display = 'none';
+                }, 500); // Coincide con el tiempo de transición
+            } else {
+                // Mostrar la sección
+                editDownload.style.display = 'block';
+                setTimeout(() => {
+                    editDownload.classList.add('visible');
+                    editDownload.style.opacity = '1';
+                }, 10); // Permite que la transición se active
+            }
+        };
+
+        this.lastInputValue = null; // Variable para almacenar el último valor
+
+        btn.addEventListener('click', async () => {
+            const inputValue = input.value;
+
+            // Verificar si el valor del input es válido
+            if (!isValidInput(inputValue)) {
+                console.log("Input inválido. Por favor, introduce algún texto.");
+                
+                // Añadir clase de shake al input
+                input.classList.add('shake');
+                
+                // Remover la clase después de la animación para poder reutilizarla
+                setTimeout(() => {
+                    input.classList.remove('shake');
+                }, 300); // Duración de la animación (0.3s)
+
+                return; // Detener la ejecución si no es válido
+            }
+
+            _me.selectEmojiInQrCurrently = { status:false, type: null};
+            // Verificar si el valor es igual al último
+            if (inputValue === this.lastInputValue) {
+                console.log("El valor es el mismo que el anterior. No se realizará ninguna acción.");
+                await this.updateQR(inputValue);
+                if(!this.editQRoptionsDoomIsVisible){
+                    toggleEditOptions();
+                    toggleDownloadOptions();
+                    this.firstrender = false;
+                }
+                return; // Detener la ejecución si el valor no ha cambiado
+            }
+
+            // Actualizar el último valor almacenado
+            this.lastInputValue = inputValue;
+
+            // Continuar con las acciones si el valor es válido y nuevo
+            if(this.firstrender && !this.editQRoptionsDoomIsVisible){
+                toggleEditOptions();
+                toggleDownloadOptions();
+                this.firstrender = false;
+            }
+
+            // Si es válido, continuar con la lógica
+            await this.updateQR(inputValue);
+            console.log("QR code updated and texture stored for Three.js with value:", inputValue);
+        });
+
+        
         input.addEventListener('input', () => {
             const value = input.value;
 
@@ -158,14 +285,24 @@ class uiControl {
                     console.log("Starting animation due to user input.");
                     //window.engine.startAnimation();
                     window.engine.setSphere();
+                    // Continuar con las acciones si el valor es válido y nuevo
+                    if(!this.firstrender){
+                        toggleEditOptions();
+                        toggleDownloadOptions();
+                        this.firstrender = true;
+                    }
                 }, 300);
             } else {
                 // Si el input está vacío, ejecuta setsphere
                 console.log("Input is empty. Resetting sphere.");               
                 window.engine.startAnimation();
+                if(!this.firstrender){
+                    toggleEditOptions();
+                    toggleDownloadOptions();
+                    this.firstrender = true;
+                }
             }
         });
-
 
         btnDowloadModel3d.addEventListener('click', async () =>{
             await window.engine.downloadModel('my_QR.glb')
@@ -203,12 +340,144 @@ class uiControl {
                 }, 3000);
             }
         });
+        
+
+        //init custom selection
+        this.defaultcustomSelection = { 
+            type: "primaryPalette", 
+            data: {
+                primaryPalette: '#ff00ff', 
+                secondary: '#00ffff', 
+                background: null 
+            } 
+        };
+
+        primaryPalette.addEventListener("click", () => {
+            // primary palette
+            this.defaultcustomSelection = { 
+                type: "primaryPalette", 
+                data: { 
+                    primaryPalette: '#ff00ff', 
+                    secondary: '#00ffff', 
+                    background: null 
+                } 
+            };
+            window.engine.setPlane();
+            if(_me.selectEmojiInQrCurrently.status){
+                window.engine.updateTextureWithEmoji(_me.selectEmojiInQrCurrently.type, 50, '#FF5733', 1);
+            }
+            //window.engine.setPlane('#ff00ff', '#00ffff'); // Rosa neón al centro, azul eléctrico a los bordes
+        });
+        secondaryPalette.addEventListener("click", () => {
+            //secondary palette
+            this.defaultcustomSelection = {
+                type: "secondaryPalette",
+                 data: { 
+                    primaryPalette: '#ff4500', 
+                    secondary: '#ff0000', 
+                    background: null,                    
+                } 
+            };
+
+            window.engine.setPlane('#ff4500', '#ff0000'); 
+            if(_me.selectEmojiInQrCurrently.status){
+                window.engine.updateTextureWithEmoji(_me.selectEmojiInQrCurrently.type, 50, '#FF5733', 1);
+            }
+            // Naranja neón al centro, rojo vibrante a los bordes
+
+        });
+
+        const buttons = document.querySelectorAll('.palette-options');
+
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remover la clase 'selected' de todos los botones
+                buttons.forEach(btn => btn.classList.remove('selected'));
+
+                // Añadir la clase 'selected' al botón clicado
+                button.classList.add('selected');
+            });
+        });
+
+        this.listenersUiColors();
+        this.listenerEmoji();
+    }
+
+    listenersUiColors(){
+        let _me = this;
+         // Función para sincronizar el valor entre el input color y el input text
+        function syncColorInputs(colorInputId, textInputId) {
+            const colorInput = document.getElementById(colorInputId);
+            const textInput = document.getElementById(textInputId);
+
+            // Cuando se cambia el valor en el color picker
+            colorInput.addEventListener('input', () => {
+                textInput.value = colorInput.value;
+                logColorStates();
+            });
+
+            // Cuando se cambia el valor en el input de texto
+            textInput.addEventListener('input', () => {
+                // Validar que el texto ingresado sea un valor HEX válido
+                if (/^#([0-9A-Fa-f]{6})$/.test(textInput.value)) {
+                    colorInput.value = textInput.value;
+                    logColorStates();
+                }
+            });
+        }
+
+        const btnselection = document.getElementById("CreateYourPalette");
+        btnselection.addEventListener('click', () => {
+            logColorStates();
+        });
+
+        // Función para loggear los estados de los colores
+        function logColorStates() {
+            const color1 = document.getElementById('customPaletteColor1picker').value;
+            const color2 = document.getElementById('customPaletteColorpicker2').value;
+            const backgroundColor = document.getElementById('backgroundColor').value;
+
+            console.log(`Estado actual:
+            Color 1: ${color1}
+            Color 2: ${color2}
+            Background: ${backgroundColor}`);
+
+            _me.defaultcustomSelection = { type: "CreateYourPalette", data: { primaryPalette: color1, secondary: color2, background: backgroundColor } };
+            window.engine.setPlane(color1, color2, backgroundColor); // Fondo transparente con gradiente rojo al azul.
+            if(_me.selectEmojiInQrCurrently.status){
+                window.engine.updateTextureWithEmoji(_me.selectEmojiInQrCurrently.type, 50, '#FF5733', 1);
+            }
+        }
+
+        // Inicializar sincronización
+        syncColorInputs('customPaletteColor1picker', 'customPaletteColor1');
+        syncColorInputs('customPaletteColorpicker2', 'customPaletteColor2');
+        syncColorInputs('backgroundColor', 'backgroundColor3');
+    }
+
+    listenerEmoji(){
+        let _me = this;
+        const button = document.getElementById("addEmojiBtn");
+        const picker = new EmojiButton();
+
+        picker.on("emoji", emoji => {
+            console.log(`Selected Emoji: ${emoji.emoji}`, emoji);
+            //window.engine.updateTextureWithEmoji(emoji.emoji, 150, '#FF5733', 0.3);
+            let newData = this.lastInputValue;
+            console.log(`New data: ${newData}`)
+            _me.updateQRwithEmoji(newData, emoji.emoji);            
+        });
+
+        button.addEventListener("click", () => {
+            picker.togglePicker(button);
+        });
 
     }
 
     async updateQR(newData) {
+        let _me = this;
         // Actualiza el contenido del QR Code
-        this.qrcode.update({ data: newData });
+        this.qrcode.update({ data: newData, image: null});
 
         // Usa getRawData para obtener la imagen en formato Blob y espera a que se complete
         this.qrImage = await this.qrcode.getRawData();
@@ -222,11 +491,155 @@ class uiControl {
                 this.qrTexture = texture;
                 //const Engine = new engine(this.qrTexture);
                 window.engine.updateTexture(this.qrTexture);
-                window.engine.setPlane();
+                let type = _me.defaultcustomSelection.type
+                let palette = _me.defaultcustomSelection.data
+                console.log(_me.defaultcustomSelection)
+                switch (type) {
+                    case "CreateYourPalette":
+                        window.engine.setPlane();
+                        console.log((`palette primaryPalette ${palette.primaryPalette}`, ` secondary ${palette.secondary}`, ` background ${palette.background}`))
+                        window.engine.setPlane(`${palette.primaryPalette}`, `${palette.secondary}`, `${palette.background}`);
+                        break;
+                    case "primaryPalette":
+                        console.log("primary set");
+                        window.engine.setPlane();
+                        break;
+                    case "secondaryPalette":
+                        console.log("secondary set");
+                        window.engine.setPlane('#ff4500', '#ff0000');
+                        //window.engine.setPlane(palette.primaryPalette, palette.secondary);
+                        break;  
+                    default:
+                        console.log("default set");
+                        window.engine.setPlane();
+                        break;
+                }
                 resolve();
             });
         });
     }
+
+    async updateQRwithImage(newData, pImage) {
+        let _me = this;
+        // Actualiza el contenido del QR Code
+        this.qrcode.update({ 
+            data: newData,  
+            image: pImage,  
+            // image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Google_%22G%22_Logo.svg/200px-Google_%22G%22_Logo.svg.png",
+        });
+
+        // Usa getRawData para obtener la imagen en formato Blob y espera a que se complete
+        this.qrImage = await this.qrcode.getRawData();
+
+        // Convierte el Blob en una textura de Three.js
+        const imageUrl = URL.createObjectURL(this.qrImage);
+        const textureLoader = new THREE.TextureLoader();
+        
+        return new Promise((resolve) => {
+            textureLoader.load(imageUrl, (texture) => {
+                this.qrTexture = texture;
+                //const Engine = new engine(this.qrTexture);
+                window.engine.updateTexture(this.qrTexture);
+                let type = _me.defaultcustomSelection.type
+                let palette = _me.defaultcustomSelection.data
+                console.log(_me.defaultcustomSelection)
+                switch (type) {
+                    case "CreateYourPalette":
+                        window.engine.setPlane(palette.primaryPalette, palette.secondary, palette.background);
+                        break;
+                    case "primaryPalette":
+                        console.log("primary set");
+                        window.engine.setPlane();
+                        break;
+                    case "secondaryPalette":
+                        console.log("secondary set");
+                        window.engine.setPlane('#ff4500', '#ff0000');
+                        //window.engine.setPlane(palette.primaryPalette, palette.secondary);
+                        break;  
+                    default:
+                        console.log("default set");
+                        window.engine.setPlane();
+                        break;
+                }
+
+                resolve();
+            });
+        });
+    }
+
+    async updateQRwithEmoji(newData, emoji) {
+        let _me = this;
+        // Crea un canvas para dibujar el emoji
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const size = 100; // Tamaño del emoji en el lienzo
+    
+        // Ajusta el tamaño del lienzo
+        canvas.width = size;
+        canvas.height = size;
+    
+        // Establece la fuente para el emoji
+        ctx.font = `${size}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+    
+        // Dibuja el emoji en el centro del canvas
+        ctx.fillText(emoji, size / 2, size / 2);
+    
+        // Convierte el canvas a una URL de datos
+        const dataURL = canvas.toDataURL();
+    
+        // Actualiza el contenido del QR Code con el emoji renderizado
+        this.qrcode.update({
+            data: newData,
+            image: dataURL,
+        });
+    
+        // Usa getRawData para obtener la imagen en formato Blob y espera a que se complete
+        this.qrImage = await this.qrcode.getRawData();
+    
+        // Convierte el Blob en una textura de Three.js
+        const imageUrl = URL.createObjectURL(this.qrImage);
+        const textureLoader = new THREE.TextureLoader();
+    
+        return new Promise((resolve) => {
+            textureLoader.load(imageUrl, (texture) => {
+                this.qrTexture = texture;
+                window.engine.updateTexture(this.qrTexture);
+                
+                //_me.defaultcustomSelection = { type: "CreateYourPalette", data: { primaryPalette: color1, secondary: color2, background: backgroundColor } };
+                
+                let type = _me.defaultcustomSelection.type
+                let palette = _me.defaultcustomSelection.data
+                console.log(_me.defaultcustomSelection)
+                switch (type) {
+                    case "CreateYourPalette":
+                        window.engine.setPlane(palette.primaryPalette, palette.secondary, palette.background);
+                        break;
+                    case "primaryPalette":
+                        console.log("primary set");
+                        window.engine.setPlane();
+                        break;
+                    case "secondaryPalette":
+                        console.log("secondary set");
+                        window.engine.setPlane('#ff4500', '#ff0000');
+                        //window.engine.setPlane(palette.primaryPalette, palette.secondary);
+                        break;  
+                    default:
+                        console.log("default set");
+                        window.engine.setPlane();
+                        break;
+                }
+
+                window.engine.updateTextureWithEmoji(emoji, 50, '#FF5733', 1);
+                _me.selectEmojiInQrCurrently = { status:true, type: emoji};
+
+                resolve();
+            });
+        });
+    }
+    
+    
 }
 
 class engine {
@@ -257,7 +670,7 @@ class engine {
     }
 
     createRenderer() {
-        this.renderer = new THREE.WebGLRenderer({ alpha: true, preserveDrawingBuffer: true });
+        this.renderer = new THREE.WebGLRenderer({ alpha: true, preserveDrawingBuffer: true, antialias: true });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
         this.container.appendChild(this.renderer.domElement);
     }
@@ -351,11 +764,11 @@ class engine {
         this.globalPointsObject = points;
     }
     
-    
-    async setPlane() {
+
+    async setPlane(centerColor = '#ff0000', edgeColor = '#0000ff',  backgroundPalette = '#FFFFFF') {
         this.startAnimatonSphere = false;
         this.isAnimating = false; // Detener animación
-    
+        
         // Remover el objeto de partículas si está presente
         if (this.globalPointsObject) {
             this.scene.remove(this.globalPointsObject);
@@ -373,51 +786,14 @@ class engine {
         // Dibujar la textura en el canvas
         context.drawImage(qrImage, 0, 0);
     
-        // Obtener los datos de los píxeles
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
+        // Guardar referencias para uso posterior
+        this.gradientCanvas = canvas;
+        this.gradientContext = context;
     
-        // Calcular el centro del canvas
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-        const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+        // Aplicar un gradiente radial inicial respetando la textura QR
+        this.updateGradientOnQR(centerColor, edgeColor, backgroundPalette);
     
-        // Aplicar gradiente radial solo a los píxeles azules
-        for (let y = 0; y < canvas.height; y++) {
-            for (let x = 0; x < canvas.width; x++) {
-                const index = (y * canvas.width + x) * 4;
-    
-                const r = data[index];
-                const g = data[index + 1];
-                const b = data[index + 2];
-    
-                // Detectar píxeles predominantemente azules
-                if (b > r && b > g) {
-                    // Calcular distancia desde el centro
-                    const dx = x - centerX;
-                    const dy = y - centerY;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-                    // Normalizar la distancia
-                    const t = distance / maxDistance;
-    
-                    // Interpolar entre rojo y azul
-                    const newR = 255 * (1 - t); // Más rojo cerca del centro
-                    const newB = 255 * t; // Más azul hacia los bordes
-    
-                    // Aplicar el gradiente al píxel azul
-                    data[index] = newR;     // Rojo
-                    data[index + 1] = 0;    // Verde
-                    data[index + 2] = newB; // Azul
-                    // Mantener el canal alfa original
-                }
-            }
-        }
-    
-        // Actualizar los datos de la textura
-        context.putImageData(imageData, 0, 0);
-    
-        // Crear una nueva textura desde el canvas
+        // Crear una textura inicial desde el canvas
         const updatedTexture = new THREE.CanvasTexture(canvas);
         updatedTexture.wrapS = THREE.ClampToEdgeWrapping;
         updatedTexture.wrapT = THREE.ClampToEdgeWrapping;
@@ -430,7 +806,8 @@ class engine {
         const planeMaterial = new THREE.MeshBasicMaterial({
             map: updatedTexture,
             side: THREE.DoubleSide,
-            color: 0xffffff, // Asegúrate de que sea blanco puro para no alterar la textura
+            color: 0xffffff, // Blanco puro para no alterar la textura
+            transparent: true,
             toneMapped: false // Evita ajustes automáticos de exposición si usas un renderizador físico
         });
     
@@ -440,20 +817,138 @@ class engine {
         const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
     
         // Asignar un alias único al objeto
-        planeMesh.name = 'planeModel'; // Este es el alias único
+        planeMesh.name = 'planeModel';
     
         this.scene.add(planeMesh);
     
-        // Guardar referencia global para futuras modificaciones
+        // Guardar referencias globales
         this.globalPointsObject = planeMesh;
+        this.globalTexture = updatedTexture;
     
-        // Actualizar la cámara para mejor vista
+        // Ajustar la cámara para una mejor vista
         this.camera.position.set(0, 0, 3);
         this.camera.lookAt(this.scene.position);
     }
     
     
+    updateGradientOnQR(centerColor, edgeColor, replacementColor = '#FFFFFF') {
+        if (!this.gradientCanvas || !this.gradientContext) {
+            console.error('Canvas or context is not initialized.');
+            return;
+        }
     
+        const canvas = this.gradientCanvas;
+        const context = this.gradientContext;
+    
+        // Obtener los datos de los píxeles actuales
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+    
+        // Calcular el centro del canvas y la distancia máxima
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+    
+        // Convertir colores hexadecimales a RGB
+        const hexToRGB = (hex) => {
+            if (hex.startsWith('rgba')) {
+                const rgba = hex.match(/rgba?\((\d+), (\d+), (\d+),? ([\d.]+)?\)/);
+                return { r: parseInt(rgba[1]), g: parseInt(rgba[2]), b: parseInt(rgba[3]), a: parseFloat(rgba[4] || 1) };
+            }
+            const bigint = parseInt(hex.slice(1), 16);
+            return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255, a: 1 };
+        };
+    
+        const centerRGB = hexToRGB(centerColor);
+        const edgeRGB = hexToRGB(edgeColor);
+        const replacementRGB = hexToRGB(replacementColor);
+    
+        // Aplicar gradiente radial respetando los píxeles de la textura QR
+        for (let y = 0; y < canvas.height; y++) {
+            for (let x = 0; x < canvas.width; x++) {
+                const index = (y * canvas.width + x) * 4;
+    
+                const r = data[index];
+                const g = data[index + 1];
+                const b = data[index + 2];
+                const a = data[index + 3];
+    
+                // Detectar píxeles que NO sean predominantemente azules
+                if (!(b > r && b > g)) {
+                    if (replacementRGB.a === 0) {
+                        // Si el color de reemplazo es transparente, deja el píxel transparente
+                        data[index + 3] = 0; // Alpha a 0
+                    } else {
+                        // Cambiar estos píxeles al color de reemplazo
+                        data[index] = replacementRGB.r;     // Rojo
+                        data[index + 1] = replacementRGB.g; // Verde
+                        data[index + 2] = replacementRGB.b; // Azul
+                        data[index + 3] = replacementRGB.a * 255; // Alpha
+                    }
+                } else {
+                    const dx = x - centerX;
+                    const dy = y - centerY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const t = distance / maxDistance;
+    
+                    // Interpolación de colores entre centro y borde
+                    data[index] = centerRGB.r * (1 - t) + edgeRGB.r * t; // Rojo
+                    data[index + 1] = centerRGB.g * (1 - t) + edgeRGB.g * t; // Verde
+                    data[index + 2] = centerRGB.b * (1 - t) + edgeRGB.b * t; // Azul
+                    data[index + 3] = 255; // Alpha (opaco en la interpolación)
+                }
+            }
+        }
+    
+        // Actualizar los datos de los píxeles en el canvas
+        context.putImageData(imageData, 0, 0);
+    
+        // Actualizar la textura en Three.js
+        if (this.globalTexture) {
+            this.globalTexture.needsUpdate = true;
+        }
+    }
+    
+    async updateTextureWithEmoji(emoji, fontSize = 100, emojiColor = '#000000', opacity = 0.5) {
+        if (!this.gradientCanvas || !this.gradientContext) {
+            console.error('Canvas or context is not initialized.');
+            return;
+        }
+    
+        const canvas = this.gradientCanvas;
+        const context = this.gradientContext;
+    
+        // Guardar el estado del contexto antes de aplicar cambios
+        context.save();
+    
+        // Calcular el centro del canvas
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+    
+        // Configurar el estilo del texto
+        context.font = `${fontSize}px sans-serif`;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillStyle = emojiColor;
+    
+        // Aplicar opacidad al emoji
+        context.globalAlpha = opacity;
+    
+        // Dibujar el emoji en el centro del canvas
+        context.fillText(emoji, centerX, centerY);
+    
+        // Restaurar el estado original del contexto
+        context.restore();
+    
+        // Actualizar la textura de Three.js
+        if (this.globalTexture) {
+            this.globalTexture.needsUpdate = true;
+        }
+    }
+    
+   
+    
+
     
     setSphere() {
         // Si hay un objeto global presente (sea el plano o las partículas), eliminarlo
@@ -660,52 +1155,74 @@ class engine {
     }
     
     downloadModelAsMP4(fileName = 'model.mp4', duration = 5000, fps = 30) {
-        try {
-            if (!this.scene || !this.renderer || !this.camera) {
-                throw new Error('Escena, renderizador o cámara no están configurados.');
-            }
+        if (!this.scene || !this.renderer || !this.camera) {
+            console.error('La escena, el renderizador o la cámara no están configurados.');
+            return;
+        }
     
+        try {
+           
+            // Configuración inicial
             const capturer = new CCapture({
                 format: 'webm',
                 framerate: fps,
                 verbose: true,
+                name: fileName,
+                quality: 100, // Configuración de calidad alta
             });
     
-            const totalFrames = (fps * duration) / 1000;
+            const totalFrames = Math.ceil((fps * duration) / 1000);
             let currentFrame = 0;
-            const originalAnimationState = this.isAnimating;
-            this.isAnimating = false;
+            const wasAnimating = this.isAnimating; // Guardar el estado previo de la animación
+            this.isAnimating = false; // Pausar animaciones globales
     
+            const originalRotation = this.globalPointsObject
+                ? this.globalPointsObject.rotation.y
+                : 0;
+    
+            // Función recursiva para renderizar y capturar cada frame
             const renderFrame = () => {
                 try {
+                    // Rotación opcional del modelo
                     if (this.globalPointsObject) {
-                        this.globalPointsObject.rotation.y += (Math.PI * 2) / totalFrames;
+                        this.globalPointsObject.rotation.y =
+                            originalRotation + ((Math.PI * 2 * currentFrame) / totalFrames);
                     }
     
+                    // Renderizado de la escena
                     this.renderer.render(this.scene, this.camera);
+    
+                    // Capturar frame
                     capturer.capture(this.renderer.domElement);
     
+                    // Continuar o finalizar el proceso
                     currentFrame++;
                     if (currentFrame < totalFrames) {
-                        requestAnimationFrame(() => renderFrame()); // Asegurar contexto
+                        requestAnimationFrame(renderFrame); // Continuar en el siguiente frame
                     } else {
+                        // Finalización del proceso de captura
                         capturer.stop();
                         capturer.save();
-                        this.isAnimating = originalAnimationState;
+                        this.isAnimating = wasAnimating; // Restaurar estado original de animación
                         console.log('Captura de video completada.');
                     }
                 } catch (renderError) {
-                    console.error('Error durante el renderizado:', renderError);
+                    console.error('Error durante el renderizado de un frame:', renderError);
+                    capturer.stop();
+                    capturer.save(); // Guardar lo capturado hasta ahora en caso de error
+                    this.isAnimating = wasAnimating;
                 }
             };
     
+            // Iniciar captura y renderizado
+            console.log('Iniciando captura de video...');
             capturer.start();
             renderFrame();
         } catch (error) {
             console.error('Error al intentar exportar el modelo como MP4:', error);
-            console.error(`Error: ${error.message}. Revisa la consola para más detalles.`);
         }
-    }       
+    }
+          
 }
 
 

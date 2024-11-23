@@ -1,0 +1,131 @@
+.edit-btn{
+    background: none;
+    border: 2px solid #ffffff;
+    border-radius: 25px;
+    padding: 12px 24px;
+    color: #ffffff;
+    font-size: 1rem;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+.edit-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+}
+#editQRoptions {
+    display: none; /* Ocultar por defecto */
+    opacity: 0; /* Invisible inicialmente */
+    transition: opacity 0.5s ease; /* Transición suave para la opacidad */
+}
+
+#editQRoptions.visible {
+    display: block; /* Mostrar el elemento */
+    opacity: 1; /* Hacerlo visible */
+}
+
+/* Ajustes responsivos */
+@media screen and (max-width: 600px) {
+    .edit-buttons {
+        padding: 0.8rem;
+    }
+
+    .edit-buttons {
+        font-size: 1.2rem;
+    }
+
+    .edit-buttons {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+}
+
+
+
+
+
+
+
+
+/* Styling for individual color sections */
+.colorRadialCustomSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+}
+
+/* Label styling */
+.colorRadialCustomSection label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #cccccc;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+
+/* Styling for color pickers */
+.input-colorpicker {
+    -webkit-appearance: none;
+    appearance: none;
+    border: 2px solid #ffffff;
+    border-radius: 50%; /* Circular shape */
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background: none;
+}
+
+.input-colorpicker::-webkit-color-swatch {
+    border-radius: 50%; /* Keep swatch circular */
+    border: none;
+}
+
+.input-colorpicker:focus,
+.input-colorpicker:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* Styling for text inputs */
+.input-textColor {
+    border: 2px solid #ffffff;
+    border-radius: 25px;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+    padding: 8px 12px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+    flex-grow: 1;
+    max-width: 150px;
+    text-align: center;
+}
+
+.input-textColor::placeholder {
+    color: #666666;
+}
+
+.input-textColor:focus {
+    border-color: #ffffff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+
+.button.palette-options:hover {
+    background: #ffffff;
+    color: #0d0d0d;
+    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.5);
+}
+.emoji-picker__wrapper {
+    z-index: 999;
+}
